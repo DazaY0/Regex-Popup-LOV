@@ -55,12 +55,11 @@ BEGIN
     
 END render_regex_lov;
 
-
 PROCEDURE ajax_regex_lov (
-    p_item       IN            apex_plugin.t_page_item,
-    p_plugin     IN            apex_plugin.t_plugin,
-    p_param      IN            apex_plugin.t_item_ajax_param,
-    p_result     OUT           apex_plugin.t_item_ajax_result 
+    p_item       IN             apex_plugin.t_page_item,
+    p_plugin     IN             apex_plugin.t_plugin,
+    p_param      IN             apex_plugin.t_item_ajax_param,
+    p_result     OUT            apex_plugin.t_item_ajax_result 
 )
 IS
     l_search_str    VARCHAR2(4000) := apex_application.g_x01;
@@ -71,8 +70,6 @@ IS
     l_display_val   VARCHAR2(4000);
     l_return_val    VARCHAR2(4000);
     l_match         BOOLEAN;
-    l_result_count  NUMBER := 0;
-    l_first         boolean;
 BEGIN
     -- fetches the data
     l_column_value_list := apex_plugin_util.get_data (
@@ -84,17 +81,11 @@ BEGIN
 
     apex_json.open_object;
     apex_json.open_array('results');
-    if p_item.lov_display_null then --if the display null attribute is toggled on it always adds a null value
-        l_first := false;
-    else
-        l_first := true; --if not it just ignores it later
-    end if;
 
     -- loops throught the data
-        for i in 1 .. l_column_value_list(1).count
-    loop
+    FOR i IN 1 .. l_column_value_list(1).count LOOP
         
-        l_display_val :=l_column_value_list(1)(i);
+        l_display_val := l_column_value_list(1)(i);
         
         IF l_column_value_list.count >= 2 THEN
             l_return_val := l_column_value_list(2)(i);
@@ -104,8 +95,6 @@ BEGIN
         
         l_match := FALSE;
         
-
-       
         IF l_search_str IS NULL THEN
             l_match := TRUE;
         ELSE
@@ -115,7 +104,7 @@ BEGIN
                     IF REGEXP_LIKE(l_display_val, l_search_str, 'i') THEN
                         l_match := TRUE;
                     END IF;
-                ELSE
+                ELSE --if some other search is desired just add a elsif here
                     -- Check Like (Standard)
                     IF UPPER(l_display_val) LIKE '%' || UPPER(l_search_str) || '%' THEN
                         l_match := TRUE;
@@ -126,29 +115,14 @@ BEGIN
             END;
         END IF;
 
-        --write in the json
+         --write in the json
         IF l_match THEN
-            if l_first = false then --can only be false if display-null is activated
-                l_first := true; -- set it to true so it only adds it one time
-                apex_json.open_object;
-                apex_json.write('display_name', p_item.lov_null_text);
-                apex_json.write('id', p_item.lov_null_value);
-                apex_json.close_object;
-            end if;
             apex_json.open_object;
             apex_json.write('display_name', l_display_val);
             apex_json.write('id', l_return_val);
             apex_json.close_object;
-            
-            l_result_count := l_result_count + 1;
-            
-            IF l_result_count >= 50 THEN
-                EXIT;
-            END IF;
-
         END IF;
         
-
     END LOOP;
 
     apex_json.close_array;
