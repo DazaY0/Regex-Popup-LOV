@@ -1,0 +1,86 @@
+/* Ensure the input container is flex in case PL/SQL style is overridden */
+.regex-lov-container {
+    display: flex !important;
+    align-items: center;
+    flex-wrap: nowrap !important;
+
+}
+
+/* The Dropdown Container */
+.regex-lov-dropdown {
+    position: absolute;
+    z-index: 2000;
+    background: #fff;
+    border: 1px solid #d4d4d4;
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    display: flex;
+    flex-direction: column;
+    margin-top: 2px;
+}
+
+.regex-lov-dropdown .lov-header {
+    padding: 8px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #e1e1e1;
+}
+
+.regex-lov-dropdown .lov-search-row {
+    display: flex;
+    gap: 4px; /* Space between input and buttons */
+}
+
+/* Search Input */
+.regex-lov-dropdown .lov-search-input {
+    flex-grow: 1;
+    font-size: 13px;
+    height: 32px;
+}
+
+/* Buttons in Dropdown */
+.regex-lov-dropdown .t-Button {
+    height: 32px; /* Match input height */
+    width: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Mode Status Text */
+.lov-mode-status { font-size: 10px; margin-top: 4px; color: #666; }
+.lov-mode-status.is-regex { color: #2178fa; }
+#modeToggle.is-active { background-color: #2178fa; color: white; border-color: #2178fa; }
+
+/* List Styles */
+.regex-lov-dropdown .lov-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-height: 250px;
+    overflow-y: auto;
+}
+.regex-lov-dropdown .lov-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+    color: #333;
+}
+.regex-lov-dropdown .lov-item:hover {
+    background-color: #ebf4fc;
+    color: #0572ce;
+}
+.regex-lov-dropdown .lov-empty{
+    display: flex;
+    flex-direction: column;
+
+    padding: 8px 12px;
+    text-align: center;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+    color: #333;
+    gap: 5px;
+
+    
+}
