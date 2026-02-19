@@ -72,7 +72,8 @@ var regexLov = {
                 if ($display.val() === nullText) {
                     $wrapper.addClass('apex-item-wrapper--has-initial-value');
                 }
-                regexLov.toggleDropdown(itemId, ajaxId);
+                // Pass nullText into the dropdown toggler
+                regexLov.toggleDropdown(itemId, ajaxId, nullText);
             }
         };
 
@@ -82,10 +83,9 @@ var regexLov = {
         $(window).on("resize." + itemId, function() {
             regexLov.closeDropdown();
         });
-        
     },
 
-    toggleDropdown: function(itemId, ajaxId) {
+    toggleDropdown: function(itemId, ajaxId, nullText, first) {
         if (regexLov.currentDropdown && regexLov.currentDropdown.data('id') === itemId) {
             regexLov.closeDropdown();
             return;
@@ -105,7 +105,10 @@ var regexLov = {
             $fieldContainer.addClass('is-active js-show-label');
         }
 
-        var searchMode = 'LIKE';
+        var searchMode = 'SIMPLE';
+        var cachedResults = [];
+        var currentIndex = 0;
+        var pageSize = 50;
 
         var content = `
             <div id="regex_dropdown_${itemId}" class="regex-lov-dropdown">
@@ -115,15 +118,24 @@ var regexLov = {
                         <button type="button" id="btnSearch" class="t-Button t-Button--icon t-Button--hot t-Button--small" title="Search">
                             <span class="fa fa-search" aria-hidden="true"></span>
                         </button>
-                        <button type="button" id="modeToggle" class="t-Button t-Button--icon t-Button--noLabel t-Button--small" title="Current: LIKE">
+                        <button type="button" id="modeToggle" class="t-Button t-Button--icon t-Button--noLabel t-Button--small" title="Current: Normal">
                            <span class="fa fa-language" aria-hidden="true"></span>
                         </button>
                     </div>
-                    <div id="modeStatus" class="lov-mode-status">Mode: <strong>LIKE</strong></div>
+                    <div id="modeStatus" class="lov-mode-status">Mode: <strong>NORMAL</strong></div>
                 </div>
-                <ul id="lovResults" class="lov-list">
-                    <li class="lov-empty"><span class="fa fa-search" aria-hidden="true"></span><p>No results found</p></li>
-                </ul>
+                
+                <div id="lovFixedContainer" class="lov-fixed-container">
+                    <ul class="lov-list" style="">
+                        <li class="lov-item lov-null-item " style="font-style: italic;"></li>
+                    </ul>
+                </div>
+
+                <div class="lov-scroll-container" >
+                    <ul id="lovResults" class="lov-list">
+                        <li class="lov-empty"><span class="fa fa-search" aria-hidden="true"></span><p>No results found</p></li>
+                    </ul>
+                </div>
             </div>
         `;
         
@@ -137,7 +149,19 @@ var regexLov = {
         $('body').append($dropdown);
         regexLov.currentDropdown = $dropdown;
 
-       
+        //container for the nulltext that is now fixed and doesnt scroll
+        if (nullText) {
+            $dropdown.find('.lov-null-item')
+                .text(nullText)
+                .on('mousedown', function(e) {
+                    e.preventDefault();
+                    apex.item(itemId).setValue('', nullText);
+                    $("#" + itemId).trigger("change");
+                    regexLov.closeDropdown();
+                });
+            $dropdown.find('#lovFixedContainer').show();
+        }
+
         var offset = $container.offset();
         var height = $container.outerHeight();
         var width  = $container.outerWidth();
@@ -154,6 +178,52 @@ var regexLov = {
         var $searchInput = $dropdown.find("#lovSearch");
         setTimeout(function() { $searchInput.focus(); }, 50);
 
+        //render of list
+        function renderResults(append) {
+            var $list = $dropdown.find("#lovResults");
+
+            //append says if its the first time rendering
+            if (!append) {
+                $list.empty();
+                currentIndex = 0;
+            } else {
+                // Remove the old load more button 
+                $list.find('.lov-load-more-item').remove();
+            }
+
+            var endIndex = Math.min(currentIndex + pageSize, cachedResults.length); // if the cached results are smaller than the next page size
+            var chunk = cachedResults.slice(currentIndex, endIndex);
+
+            chunk.forEach(function(item) {
+                $("<li>")
+                    .text(item.display_name) 
+                    .addClass("lov-item")
+                    .on("mousedown", function(e) { 
+                        e.preventDefault();
+                        apex.item(itemId).setValue(item.id, item.display_name); 
+                        $("#" + itemId).trigger("change");
+                        regexLov.closeDropdown();
+                    })
+                    .appendTo($list);
+            });
+
+            currentIndex = endIndex;
+
+            // dynamically hangs on the load more button
+            if (currentIndex < cachedResults.length) {
+                $("<li>")
+                    .text("show more")
+                    .addClass("lov-item lov-load-more-item")
+                    .on("mousedown", function(e) {
+                        //mouse down instead of click because else it loses the focus and the closes itself
+                        e.preventDefault(); 
+                        e.stopPropagation();
+                        renderResults(true); //dont render the list from the beginning
+                    })
+                    .appendTo($list);
+            }
+        }
+
         // AJAX Search
         function performSearch() {
             var val = $searchInput.val();
@@ -165,34 +235,19 @@ var regexLov = {
                  return;
             }
 
-
             $list.html('<li class="lov-loading"><span class="fa fa-spinner fa-anim-spin"></span> Searching...</li>');
             
-            //perform the search
             apex.server.plugin(ajaxId, { 
                 x01: val,
                 x02: searchMode
             }, {
                 success: function(data) {
-                    $list.empty();
-                    if (!data.results || data.results.length === 0) { //if no results have been found
-                        $list.append('<li class="lov-empty"><span class="fa fa-search" aria-hidden="true"></span><p>No results found</p></li>');
+                    if (!data.results || data.results.length === 0) {
+                        $list.html('<li class="lov-empty"><span class="fa fa-search" aria-hidden="true"></span><p>No results found</p></li>');
+                        cachedResults = [];
                     } else {
-                        $.each(data.results, function(i, item) { //if found create a list
-
-                            $("<li>")
-                                .text(item.display_name) 
-                                .addClass("lov-item")
-                               .on("mousedown", function(e) { 
-                                    e.preventDefault();
-
-                                    apex.item(itemId).setValue(item.id, item.display_name); //change the value and the display value
-                                    $("#" + itemId).trigger("change");//for interactive grid
-
-                                    regexLov.closeDropdown();
-                                })
-                                .appendTo($list);
-                        });
+                        cachedResults = data.results;
+                        renderResults(false); //first time so render the list from the beginning
                     }
                 },
                 error: function(xhr, status, error) {
@@ -217,16 +272,16 @@ var regexLov = {
 
         $dropdown.find("#modeToggle").on("click", function(e) {
             e.stopPropagation();
-            if (searchMode === 'LIKE') { //switch between the two states
+            if (searchMode === 'SIMPLE') { //switch between the two states
                 searchMode = 'REGEX';
                 $("#modeStatus").html("Mode: <strong>REGEX</strong>").addClass("is-regex");
                 $(this).addClass("is-active");
                 $("#modeToggle").attr("title", "Current: REGEX");
             } else {
-                searchMode = 'LIKE';
-                $("#modeStatus").html("Mode: <strong>LIKE</strong>").removeClass("is-regex");
+                searchMode = 'SIMPLE';
+                $("#modeStatus").html("Mode: <strong>NORMAL</strong>").removeClass("is-regex");
                 $(this).removeClass("is-active");
-                $("#modeToggle").attr("title", "Current: LIKE");
+                $("#modeToggle").attr("title", "Current: NORMAL");
             }
         });
 
@@ -249,6 +304,7 @@ var regexLov = {
                 }
             });
         }, 10);
+        performSearch()
     },
 
     closeDropdown: function() {
@@ -257,22 +313,22 @@ var regexLov = {
             var itemId = this.currentDropdown.data('id');
             var $displayItem = $("#" + itemId + "_DISPLAY");
             var $wrapper = $displayItem.closest('.apex-item-wrapper');
-            
-           //chekc if display Value is not null if value is null
+
+            //chekc if display Value is not null if value is null
             if ($displayItem.val() && $displayItem.val().length > 0) {
                 //keep the label floating for display null value
-                $fieldContainer.addClass('is-active js-show-label');
+                $fieldContainer.addClass(' js-show-label');
                 $wrapper.addClass('apex-item-wrapper--has-initial-value');
             } else {
                 $fieldContainer.removeClass('is-active js-show-label');
                 $wrapper.removeClass('apex-item-wrapper--has-initial-value');
             }
 
-           //destroy the dom componentns
+            //destroy the dom componentns
             this.currentDropdown.remove();
             this.currentDropdown = null;
-            $(document).off('click.regexLov');
-        
+            $(document).off('mousedown.regexLov');
+            $(document).off('keydown.regexLov');
         }
     }
 };
