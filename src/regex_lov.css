@@ -78,9 +78,10 @@
     padding: 8px 12px;
     cursor: pointer;
     border-bottom: 1px solid #f0f0f0;
-    font-size: 15px;
-    font-weight: 400;
+    font-size: 16px;
+    font-weight: 450;
     color: #333;
+    font-family: var(--ut-base-font-family, var(--a-base-font-family, sans-serif));
 }
 .regex-lov-dropdown .lov-item:hover {
     background-color: #ebf4fc;
