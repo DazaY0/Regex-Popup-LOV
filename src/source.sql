@@ -11,6 +11,9 @@ IS
     l_is_readonly      BOOLEAN := p_param.is_readonly;
     l_container_cls VARCHAR2(255) := 't-Form-inputContainer regex-lov-container';
     l_btn_style     VARCHAR2(255) := '"border-top-left-radius: 0; border-bottom-left-radius: 0; margin-left: -1px;';
+    l_btn_create_new  p_item.attribute_01%TYPE :=  p_item.attributes.get_varchar2('is_create_new_enabled')  ;
+    l_create_page_id p_item.attribute_02%TYPE := p_item.attributes.get_varchar2('page_id') ;
+    l_create_page_url varchar2(4000);
 BEGIN
     -- Get the correct name attribute based on the current context
     l_name := apex_plugin.get_input_name_for_page_item(p_is_multi_value => false);
@@ -19,6 +22,17 @@ BEGIN
     -- Only Page Items can have name="...", in IG the cell cant have a name as it is not being send to the server
     IF l_name IS NOT NULL THEN
         l_name_attr := ' name="' || l_name || '"';
+    END IF;
+
+
+     IF l_btn_create_new in ('true', 'TRUE', 'Y', 'y') and l_create_page_id is not null
+        THEN
+            l_create_page_url := apex_page.get_url(
+                p_page      => TO_NUMBER(l_create_page_id),
+                p_plain_url => false
+            );
+        ELSE
+            l_create_page_url := NULL;
     END IF;
 
     -- gets the display value it has on load based on param value
@@ -61,7 +75,10 @@ BEGIN
                 (CASE WHEN p_item.lov_display_null THEN 'true' ELSE 'false' END) || '", "' ||               
                 sys.htf.escape_sc(p_item.lov_null_value) || '", "' ||            
                 sys.htf.escape_sc(p_item.lov_null_text) || '", "' || 
-              (CASE WHEN l_is_readonly THEN 'true' ELSE 'false' END) || '");'
+              (CASE WHEN l_is_readonly THEN 'true' ELSE 'false' END) || '" , "' ||
+                sys.htf.escape_sc(l_btn_create_new) || '" , "' ||
+                sys.htf.escape_sc(l_create_page_url) ||
+               '");'
 );
     
 END render_regex_lov;
