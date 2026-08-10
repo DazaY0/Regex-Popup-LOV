@@ -1,12 +1,12 @@
-let regexLov = {
+var regexLov = {
     currentDropdown: null,
 
-    init: function(itemId, ajaxId, displayNull, nullValue, nullText, isReadOnly) {
-        let $display = $("#" + itemId + "_DISPLAY");
-        let $hidden  = $("#" + itemId);
-        let $btn     = $("#" + itemId + "_BTN");
-        let $itemContainer = $display.closest('.t-Form-fieldContainer');
-        let $wrapper = $display.closest('.apex-item-wrapper');
+    init: function(itemId, ajaxId, displayNull, nullValue, nullText, isReadOnly,  isCreateNewButton, createNewPageURL) {
+        var $display = $("#" + itemId + "_DISPLAY");
+        var $hidden  = $("#" + itemId);
+        var $btn     = $("#" + itemId + "_BTN");
+        var $itemContainer = $display.closest('.t-Form-fieldContainer');
+        var $wrapper = $display.closest('.apex-item-wrapper');
 
         // register apex item for Interactive Grid support
         apex.item.create(itemId, {
@@ -80,7 +80,7 @@ let regexLov = {
         }
 
         // event handler
-        let toggleHandler = function(e) {
+        var toggleHandler = function(e) {
             e.preventDefault();
             e.stopPropagation();
             if (!$display.prop('disabled')) {
@@ -88,7 +88,7 @@ let regexLov = {
                     $wrapper.addClass('apex-item-wrapper--has-initial-value');
                 }
                 // Pass nullText into the dropdown toggler
-                regexLov.toggleDropdown(itemId, ajaxId, displayNull, nullValue, nullText);
+                regexLov.toggleDropdown(itemId, ajaxId, displayNull, nullValue, nullText,  isCreateNewButton, createNewPageURL);
             }
         };
 
@@ -100,32 +100,53 @@ let regexLov = {
         });
     },
 
-    toggleDropdown: function(itemId, ajaxId, displayNull, nullValue, nullText, first) {
+    toggleDropdown: function(itemId, ajaxId, displayNull, nullValue, nullText, isCreateNewButton, createNewPageURL) {
         if (regexLov.currentDropdown && regexLov.currentDropdown.data('id') === itemId) {
             regexLov.closeDropdown();
             return;
         }
         regexLov.closeDropdown();
 
-        let $displayItem = $("#" + itemId + "_DISPLAY");
+        var $displayItem = $("#" + itemId + "_DISPLAY");
         
         // Look for standard containers, but fallback to the input itself for IG
-        let $container = $displayItem.closest('.t-Form-inputContainer, .apex-item-wrapper');
+        var $container = $displayItem.closest('.t-Form-inputContainer, .apex-item-wrapper');
         if ($container.length === 0) {
             $container = $displayItem; // Fallback for Interactive Grid
         }
 
-        let $fieldContainer = $displayItem.closest('.t-Form-fieldContainer');
+        var $fieldContainer = $displayItem.closest('.t-Form-fieldContainer');
         if ($fieldContainer.length > 0) {
             $fieldContainer.addClass('is-active js-show-label');
         }
 
-        let searchMode = 'SIMPLE';
-        let cachedResults = [];
-        let currentIndex = 0;
-        let pageSize = 50;
+        var searchMode = 'SIMPLE';
+        var cachedResults = [];
+        var currentIndex = 0;
+        var pageSize = 50;
+
+        var showCreateNewButton =
+        isCreateNewButton === true ||
+        isCreateNewButton == "true" ||
+        isCreateNewButton === "Y";
+
+        var createButtonHtml = "";
+
+        if (showCreateNewButton && createNewPageURL) {
+            createButtonHtml = `
+                <li class="lov-create-new-item">
+                    <button
+                        type="button"
+                        class="lov-create-new-btn t-Button--hot open-details-btn"
+                        data-dialog-url="${createNewPageURL}">
+                          <span class="fa fa-plus" aria-hidden="true"></span>
+                          <span>Create New</span>
+                    </button>
+                </li>`;
+        }
+
       
-        let content = `
+        var content = `
             <div id="regex_dropdown_${itemId}" class="regex-lov-dropdown">
                 <div class="lov-header">
                     <div class="lov-search-row">
@@ -133,11 +154,7 @@ let regexLov = {
                         <button type="button" id="btnSearch" class="t-Button t-Button--icon t-Button--hot t-Button--small" title="Search">
                             <span class="fa fa-search" aria-hidden="true"></span>
                         </button>
- 			<button type="button" id="modeToggle" class="t-Button t-Button--icon t-Button--noLabel t-Button--small" title="Current: Normal">
-                           <span class="fa fa-language" aria-hidden="true"></span>
-                        </button>
                     </div>
-		    <div id="modeStatus" class="lov-mode-status">Mode: <strong>NORMAL</strong></div>
                 </div>
                 
                 <div id="lovFixedContainer" class="lov-fixed-container">
@@ -149,12 +166,13 @@ let regexLov = {
                 <div class="lov-scroll-container" >
                     <ul id="lovResults" class="lov-list">
                         <li class="lov-empty"><span class="fa fa-search" aria-hidden="true"></span><p>No results found</p></li>
+                        ${createButtonHtml}
                     </ul>
                 </div>
             </div>
         `;
         
-        let $dropdown = $(content);
+        var $dropdown = $(content);
         $dropdown.data('id', itemId);
         $dropdown.data('fieldContainer', $fieldContainer); 
 
@@ -164,7 +182,7 @@ let regexLov = {
         $('body').append($dropdown);
         regexLov.currentDropdown = $dropdown;
 
-        let isDisplayNull = (displayNull === true || displayNull === 'true' || displayNull === 'Y');
+        var isDisplayNull = (displayNull === true || displayNull === 'true' || displayNull === 'Y');
         nullValue = nullValue || "";
         nullText  = nullText  || "null";
         //container for the nulltext that is now fixed and doesnt scroll
@@ -183,9 +201,9 @@ let regexLov = {
             $dropdown.find('#lovFixedContainer').remove(); 
         }
 
-        let offset = $container.offset();
-        let height = $container.outerHeight();
-        let width  = $container.outerWidth();
+        var offset = $container.offset();
+        var height = $container.outerHeight();
+        var width  = $container.outerWidth();
         
         $dropdown.css({
             "position": "absolute", 
@@ -196,12 +214,12 @@ let regexLov = {
             "z-index": 2000 // this ensures that it floats above the IG headers and dialogs
         });
 
-        let $searchInput = $dropdown.find("#lovSearch");
+        var $searchInput = $dropdown.find("#lovSearch");
         setTimeout(function() { $searchInput.focus(); }, 50);
 
         //render of list
         function renderResults(append) {
-            let $list = $dropdown.find("#lovResults");
+            var $list = $dropdown.find("#lovResults");
 
             //append says if its the first time rendering
             if (!append) {
@@ -212,17 +230,13 @@ let regexLov = {
                 $list.find('.lov-load-more-item').remove();
             }
 
-            let endIndex = Math.min(currentIndex + pageSize, cachedResults.length); // if the cached results are smaller than the next page size
-            let chunk = cachedResults.slice(currentIndex, endIndex);
+            var endIndex = Math.min(currentIndex + pageSize, cachedResults.length); // if the cached results are smaller than the next page size
+            var chunk = cachedResults.slice(currentIndex, endIndex);
             
 
             chunk.forEach(function(item) {
-                 let highlightedName = item.display_name;
-                if(searchMode === "SIMPLE"){
-                    highlightedName = getHighlightedText(item.display_name, $searchInput.val());
-                }
-                
-                //console.log(highlightedName)
+                var highlightedName = getHighlightedText(item.display_name, $searchInput.val());
+                console.log(highlightedName)
                 $("<li>")
                     .html(highlightedName) 
                     .addClass("lov-item")
@@ -254,12 +268,12 @@ let regexLov = {
 
         // AJAX Search
         function performSearch() {
-            let val = $searchInput.val();
-            let $list = $dropdown.find("#lovResults");
+            var val = $searchInput.val();
+            var $list = $dropdown.find("#lovResults");
             
             //prevent blank searches for regex as that doesnt return anything
             if(searchMode === 'REGEX' && val === '') {
-                 $list.html('<li class="lov-empty"><span class="fa fa-search" aria-hidden="true"></span><p>No results found</p></li>');
+                 $list.html('<li class="lov-empty"><span class="fa fa-search" aria-hidden="true"></span><p>No results found</p></li>'+ createButtonHtml);
                  return;
             }
 
@@ -272,7 +286,7 @@ let regexLov = {
                 success: function(data) {
                    // console.log("successfully got search");
                     if (!data.results || data.results.length === 0) {
-                        $list.html('<li class="lov-empty"><span class="fa fa-search" aria-hidden="true"></span><p>No results found</p></li>');
+                        $list.html('<li class="lov-empty"><span class="fa fa-search" aria-hidden="true"></span><p>No results found</p></li>'+ createButtonHtml);
                         cachedResults = [];
                     } else {
                         cachedResults = data.results;
@@ -296,21 +310,6 @@ let regexLov = {
             if(e.which === 13) { 
                 e.preventDefault();
                 performSearch();
-            }
-        });
-
-	    $dropdown.find("#modeToggle").on("click", function(e) {
-            e.stopPropagation();
-            if (searchMode === 'SIMPLE') { //switch between the two states
-                searchMode = 'REGEX';
-                $("#modeStatus").html("Mode: <strong>REGEX</strong>").addClass("is-regex");
-                $(this).addClass("is-active");
-                $("#modeToggle").attr("title", "Current: REGEX");
-            } else {
-                searchMode = 'SIMPLE';
-                $("#modeStatus").html("Mode: <strong>NORMAL</strong>").removeClass("is-regex");
-                $(this).removeClass("is-active");
-                $("#modeToggle").attr("title", "Current: NORMAL");
             }
         });
 
@@ -338,20 +337,21 @@ let regexLov = {
 
 
         function getHighlightedText(text, searchStr) {
-            let escapeHTML = function(str) {
-                let div = document.createElement('div');
+            // 1. Escape HTML to prevent XSS (since we inject HTML tags next)
+            var escapeHTML = function(str) {
+                var div = document.createElement('div');
                 div.innerText = str;
                 return div.innerHTML;
             };
-            let safeText = escapeHTML(text || "");
+            var safeText = escapeHTML(text || "");
             
             if (!searchStr) return safeText;
 
-            // Handle '\%' by temporarily swapping it with a placeholder (null character)
-            let protectedSearch = searchStr.replace(/\\%/g, '\u0000');
+            // 2. Handle '\%' by temporarily swapping it with a placeholder (null character)
+            var protectedSearch = searchStr.replace(/\\%/g, '\u0000');
 
-            // Split by the '%' wildcard and restore the escaped '%'
-            let chunks = protectedSearch.split('%');
+            // 3. Split by the '%' wildcard and restore the escaped '%'
+            var chunks = protectedSearch.split('%');
             chunks = chunks.map(function(chunk) {
                 return chunk.replace(/\u0000/g, '%');
             }).filter(function(chunk) {
@@ -360,26 +360,41 @@ let regexLov = {
 
             if (chunks.length === 0) return safeText;
 
-            // Escape regex special characters in the chunks so they are matched literally
-            let escapeRegExp = function(string) {
+            // 4. Escape regex special characters in the chunks so they are matched literally
+            var escapeRegExp = function(string) {
                 return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
             };
-            let escapedChunks = chunks.map(escapeRegExp);
+            var escapedChunks = chunks.map(escapeRegExp);
 
-            // Create a dynamic regex matching any of the chunks globally and case-insensitively
-            let regexPattern = new RegExp('(' + escapedChunks.join('|') + ')', 'gi');
+            // 5. Create a dynamic regex matching any of the chunks globally and case-insensitively
+            // Example: (chunk1|chunk2)
+            var regexPattern = new RegExp('(' + escapedChunks.join('|') + ')', 'gi');
 
-            // Wrap matches in strong tags
+            // 6. Wrap matches in strong tags
             return safeText.replace(regexPattern, '<strong>$1</strong>');
         }
+
+        //button handler for create new
+        $dropdown.on("click", ".open-details-btn", function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("clicked on create new")
+
+            var url = $(this).data("dialog-url");
+
+            if (url) {
+                apex.navigation.redirect(url);
+            }
+            regexLov.closeDropdown();
+        });
     },
 
     closeDropdown: function() {
         if (this.currentDropdown) {
-            let $fieldContainer = this.currentDropdown.data('fieldContainer');
-            let itemId = this.currentDropdown.data('id');
-            let $displayItem = $("#" + itemId + "_DISPLAY");
-            let $wrapper = $displayItem.closest('.apex-item-wrapper');
+            var $fieldContainer = this.currentDropdown.data('fieldContainer');
+            var itemId = this.currentDropdown.data('id');
+            var $displayItem = $("#" + itemId + "_DISPLAY");
+            var $wrapper = $displayItem.closest('.apex-item-wrapper');
 
             //chekc if display Value is not null if value is null
             if ($displayItem.val() && $displayItem.val().length > 0) {
