@@ -3,9 +3,9 @@
     display: flex !important;
     align-items: center;
     flex-wrap: nowrap !important;
-
 }
-.lov-loading{
+
+.lov-loading {
     text-align: center;
     margin: 5px;
 }
@@ -17,7 +17,7 @@
     background: #fff;
     border: 1px solid #d4d4d4;
     border-radius: 4px;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 16px rgba(0,0,0,0,2);
     display: flex;
     flex-direction: column;
     margin-top: 2px;
@@ -51,21 +51,35 @@
     justify-content: center;
 }
 
+/* Empty state action button */
+.regex-lov-dropdown .lov-empty .t-Button,
+.regex-lov-dropdown .lov-empty-action-btn {
+    width: auto;
+    min-width: 32px;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
 /* Mode Status Text */
 .lov-mode-status { font-size: 10px; margin-top: 4px; color: #666; }
 .lov-mode-status.is-regex { color: #2178fa; }
 #modeToggle.is-active { background-color: #2178fa; color: white; border-color: #2178fa; }
-.lov-fixed-container{
+
+.lov-fixed-container {
     display: none;
-     border-bottom: 1px solid #e5e5e5;
-     background-color: #f9f9f9;
-     float:none !important;
-                   
+    border-bottom: 1px solid #e5e5e5;
+    background-color: #f9f9f9;
+    float: none !important;
 }
-.lov-fixed-container .lov-item{
+
+.lov-fixed-container .lov-item {
     margin: 0;
-    float:none !important;
+    float: none !important;
 }
+
 /* List Styles */
 .regex-lov-dropdown .lov-list {
     list-style: none;
@@ -74,6 +88,7 @@
     max-height: 250px;
     overflow-y: auto;
 }
+
 .regex-lov-dropdown .lov-item {
     padding: 8px 12px;
     cursor: pointer;
@@ -83,14 +98,16 @@
     color: #333;
     font-family: var(--ut-base-font-family, var(--a-base-font-family, sans-serif));
 }
+
 .regex-lov-dropdown .lov-item:hover {
     background-color: #ebf4fc;
     color: #0572ce;
 }
-.regex-lov-dropdown .lov-empty{
+
+.regex-lov-dropdown .lov-empty {
     display: flex;
     flex-direction: column;
-
+    align-items: center;
     padding: 8px 12px;
     text-align: center;
     border-bottom: 1px solid #f0f0f0;
@@ -98,18 +115,87 @@
     font-weight: 400;
     color: #333;
     gap: 5px;
-
-    
 }
-.lov-scroll-container{
+
+.lov-scroll-container {
     max-height: 250px;
     overflow-y: auto;
 }
-.regex-lov-dropdown .lov-load-more-item{
+
+.regex-lov-dropdown .lov-load-more-item {
     text-align: center;
     font-weight: bold;
     background-color: #f9f9f9;
     cursor: pointer;
-        margin: 0;
-    float:none !important;
+    margin: 0;
+    float: none !important;
+}
+
+.regex-lov-dropdown .lov-create-new-item {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    list-style: none;
+    margin: 0;
+    padding: 12px;
+    border-top: 1px solid #f0f0f0;
+    background-color: #fafafa;
+}
+
+/* Button appearance */
+.regex-lov-dropdown .lov-create-new-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    min-height: 34px;
+    width: 100%;
+    max-width: 240px;
+    padding: 0 14px;
+
+    border: 1px solid rgb(22, 21, 19);
+    border-radius: 4px;
+    background-color: rgb(49, 45, 42);
+    color: #fff;
+
+    font-family: var(
+        --ut-base-font-family,
+        var(--a-base-font-family, sans-serif)
+    );
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1;
+
+    cursor: pointer;
+    transition:
+        background-color 0,15s ease,
+        border-color 0,15s ease,
+        box-shadow 0,15s ease,
+        transform 0,15s ease;
+}
+
+/* Plus icon */
+.regex-lov-dropdown .lov-create-new-btn .fa {
+    font-size: 12px;
+}
+
+/* Mouse hover */
+.regex-lov-dropdown .lov-create-new-btn:hover {
+    border-color: rgb(22, 21, 19);
+    background-color: rgb(58,54,50);
+    color: #fff;
+}
+
+/* Keyboard accessibility */
+.regex-lov-dropdown .lov-create-new-btn:focus {
+    outline: none;
+    border-color: rgb(22, 21, 19);
+    box-shadow: 0 0 0 2px rgba(5, 114, 206, 0,25);
+}
+
+/* Small press feedback */
+.regex-lov-dropdown .lov-create-new-btn:active {
+    transform: translateY(1px);
+    background-color: rgb(20, 19, 18);
 }
